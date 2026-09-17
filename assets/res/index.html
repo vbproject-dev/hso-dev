@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Lua Studio</title>
+
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #080b10;
+            --panel: #0d1219;
+            --panel2: #101720;
+            --panel3: #141c26;
+            --border: #202a36;
+            --text: #d9e1eb;
+            --muted: #718096;
+            --accent: #6ee7b7;
+            --blue: #60a5fa;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --hover: #161f2a;
+            --active: #192633;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+        }
+
+        button {
+            border: 0;
+            color: inherit;
+            background: none;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .app {
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 44px 1fr 25px;
+        }
+
+        /* TOP BAR */
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 18px;
+            background: #0a0e14;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .logo {
+            width: 23px;
+            height: 23px;
+            display: grid;
+            place-items: center;
+            border-radius: 6px;
+            color: #06100c;
+            background: linear-gradient(135deg, #6ee7b7, #38bdf8);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .menu {
+            display: flex;
+            gap: 2px;
+        }
+
+        .menu button {
+            padding: 5px 9px;
+            border-radius: 5px;
+            color: #8491a3;
+        }
+
+        .menu button:hover {
+            background: var(--hover);
+            color: #fff;
+        }
+
+        .actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action {
+            height: 30px;
+            min-width: 30px;
+            padding: 0 9px;
+            border-radius: 6px;
+            color: #8190a4;
+        }
+
+        .action:hover {
+            background: var(--hover);
+            color: #fff;
+        }
+
+        .run {
+            height: 30px;
+            padding: 0 14px;
+            border-radius: 6px;
+            background: #15362d;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .run:hover {
+            background: #1a473b;
+        }
+
+        /* MAIN */
+
+        .workspace {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 230px minmax(0, 1fr) 250px;
+        }
+
+        /* EXPLORER */
+
+        .explorer {
+            min-width: 0;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+        }
+
+        .section-header {
+            height: 38px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #7f8da0;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .section-header button {
+            color: #667589;
+            font-size: 17px;
+        }
+
+        .section-header button:hover {
+            color: #fff;
+        }
+
+        .project {
+            padding: 3px 7px;
+        }
+
+        .tree-row {
+            height: 29px;
+            padding: 0 7px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 5px;
+            color: #9aa7b8;
+            user-select: none;
+        }
+
+        .tree-row:hover {
+            background: var(--hover);
+            color: #e4ebf4;
+        }
+
+        .tree-row.active {
+            background: var(--active);
+            color: #fff;
+        }
+
+        .tree-children {
+            padding-left: 17px;
+        }
+
+        .arrow {
+            width: 10px;
+            color: #68778a;
+            font-size: 9px;
+        }
+
+        .folder {
+            color: #e7bd67;
+        }
+
+        .file {
+            width: 14px;
+            text-align: center;
+            color: var(--accent);
+            font-size: 10px;
+        }
+
+        /* CENTER */
+
+        .center {
+            min-width: 0;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: 35px minmax(0, 1fr) 190px;
+            background: #0b1016;
+        }
+
+        .tabs {
+            min-width: 0;
+            display: flex;
+            background: #0e141b;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            min-width: 145px;
+            max-width: 220px;
+            padding: 0 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #7d8a9c;
+            border-right: 1px solid var(--border);
+        }
+
+        .tab.active {
+            color: #e8eef6;
+            background: #0b1016;
+            border-top: 1px solid var(--accent);
+        }
+
+        .tab-close {
+            margin-left: auto;
+            color: #647286;
+        }
+
+        .tab-close:hover {
+            color: #fff;
+        }
+
+        .editor {
+            position: relative;
+            min-height: 0;
+        }
+
+        #monaco {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* BOTTOM */
+
+        .bottom {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: 34px 1fr;
+            background: #0a0f15;
+            border-top: 1px solid var(--border);
+        }
+
+        .bottom-tabs {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bottom-tab {
+            height: 34px;
+            color: #657489;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .bottom-tab.active {
+            color: #dce5ef;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .console {
+            padding: 9px 13px;
+            overflow: auto;
+            font: 12px/1.65 Consolas, monospace;
+            color: #8f9cad;
+            white-space: pre-wrap;
+        }
+
+        .console-line {
+            margin-bottom: 2px;
+        }
+
+        .console-success {
+            color: var(--accent);
+        }
+
+        .console-error {
+            color: var(--red);
+        }
+
+        .console-info {
+            color: var(--blue);
+        }
+
+        /* INSPECTOR */
+
+        .inspector {
+            min-width: 0;
+            background: var(--panel);
+            border-left: 1px solid var(--border);
+        }
+
+        .inspector-title {
+            height: 38px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            color: #8491a3;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .inspector-body {
+            padding: 12px;
+        }
+
+        .group {
+            margin-bottom: 20px;
+        }
+
+        .group-title {
+            margin-bottom: 8px;
+            color: #647287;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .property {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #18212b;
+            color: #7f8da0;
+        }
+
+        .property-value {
+            color: #d3dce7;
+            font-family: Consolas, monospace;
+        }
+
+        /* STATUS */
+
+        .statusbar {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            padding: 0 10px;
+            background: #10171f;
+            border-top: 1px solid var(--border);
+            color: #738195;
+            font-size: 10px;
+        }
+
+        .status-right {
+            margin-left: auto;
+            display: flex;
+            gap: 16px;
+        }
+
+        @media(max-width:900px) {
+            .workspace {
+                grid-template-columns: 190px minmax(0, 1fr);
+            }
+
+            .inspector {
+                display: none;
+            }
+        }
+
+        @media(max-width:650px) {
+            .explorer {
+                display: none;
+            }
+
+            .menu {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header class="topbar">
+
+            <div class="brand">
+                <div class="logo">L</div>
+                <span>Lua Studio</span>
+            </div>
+
+            <nav class="menu">
+                <button>File</button>
+                <button>Edit</button>
+                <button>View</button>
+                <button>Run</button>
+                <button>Help</button>
+            </nav>
+
+            <div class="actions">
+                <button class="action" id="newFile">＋</button>
+                <button class="action" id="openFile">□</button>
+                <button class="action" id="saveFile">▣</button>
+                <button class="run" id="runLua">▶ Run</button>
+            </div>
+
+        </header>
+
+        <main class="workspace">
+
+            <aside class="explorer">
+
+                <div class="section-header">
+                    <span>Explorer</span>
+                    <button id="newFileExplorer">＋</button>
+                </div>
+
+                <div class="project">
+
+                    <div class="tree-row">
+                        <span class="arrow">▼</span>
+                        <span class="folder">▰</span>
+                        <span>lua-project</span>
+                    </div>
+
+                    <div class="tree-children" id="fileTree"></div>
+
+                </div>
+
+            </aside>
+
+            <section class="center">
+
+                <div class="tabs">
+                    <div class="tab active">
+                        <span class="file">●</span>
+                        <span id="tabName">main.lua</span>
+                        <span class="tab-close">×</span>
+                    </div>
+                </div>
+
+                <div class="editor">
+                    <div id="monaco"></div>
+                </div>
+
+                <section class="bottom">
+
+                    <div class="bottom-tabs">
+                        <button class="bottom-tab active">Output</button>
+                        <button class="bottom-tab">Problems</button>
+                        <button class="bottom-tab">Terminal</button>
+                    </div>
+
+                    <div class="console" id="console"></div>
+
+                </section>
+
+            </section>
+
+            <aside class="inspector">
+
+                <div class="inspector-title">Script</div>
+
+                <div class="inspector-body">
+
+                    <div class="group">
+
+                        <div class="group-title">File</div>
+
+                        <div class="property">
+                            <span>Name</span>
+                            <span class="property-value" id="fileName">main.lua</span>
+                        </div>
+
+                        <div class="property">
+                            <span>Language</span>
+                            <span class="property-value">Lua</span>
+                        </div>
+
+                        <div class="property">
+                            <span>Encoding</span>
+                            <span class="property-value">UTF-8</span>
+                        </div>
+
+                    </div>
+
+                    <div class="group">
+
+                        <div class="group-title">Editor</div>
+
+                        <div class="property">
+                            <span>Indent</span>
+                            <span class="property-value">4</span>
+                        </div>
+
+                        <div class="property">
+                            <span>Wrap</span>
+                            <span class="property-value">Off</span>
+                        </div>
+
+                        <div class="property">
+                            <span>Minimap</span>
+                            <span class="property-value">On</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </main>
+
+        <footer class="statusbar">
+
+            <span id="cursorPosition">Ln 1, Col 1</span>
+            <span>Spaces: 4</span>
+            <span>UTF-8</span>
+            <span>Lua</span>
+
+            <div class="status-right">
+                <span>Lua Studio</span>
+                <span id="status">Ready</span>
+            </div>
+
+        </footer>
+
+    </div>
+
+    <!-- Monaco -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+
+    <!-- Fengari Lua VM -->
+    <script src="https://unpkg.com/fengari-web@0.1.4/dist/fengari-web.js"></script>
+
+    <script>
+
+        const files = {
+
+            "main.lua":
+                `local Player = require("player")
+
+local player = Player.new("Farouq")
+
+print("Hello, " .. player.name)
+print("Level:", player.level)
+
+for i = 1, 5 do
+    print("Count:", i)
+end
+`,
+
+            "player.lua":
+                `local Player = {}
+
+function Player.new(name)
+    return {
+        name = name,
+        level = 1,
+        hp = 100
+    }
+end
+
+return Player
+`
+
+        };
+
+        let currentFile = "main.lua";
+        let editor;
+        let models = {};
+
+        const consoleElement = document.getElementById("console");
+
+        function printConsole(message, type = "") {
+
+            const line = document.createElement("div");
+
+            line.className = "console-line " + type;
+
+            line.textContent = message;
+
+            consoleElement.appendChild(line);
+
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleElement.innerHTML = "";
+        }
+
+        function refreshTree() {
+
+            const tree = document.getElementById("fileTree");
+
+            tree.innerHTML = "";
+
+            Object.keys(files).forEach(name => {
+
+                const row = document.createElement("div");
+
+                row.className =
+                    "tree-row " +
+                    (name === currentFile ? "active" : "");
+
+                row.dataset.file = name;
+
+                row.innerHTML =
+                    '<span class="file">●</span>' +
+                    '<span>' + escapeHtml(name) + '</span>';
+
+                row.onclick = () => openFile(name);
+
+                tree.appendChild(row);
+
+            });
+
+        }
+
+        function escapeHtml(value) {
+
+            return value
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+
+        }
+
+        function openFile(name) {
+
+            saveCurrentModel();
+
+            currentFile = name;
+
+            if (!models[name]) {
+
+                const language =
+                    name.endsWith(".lua")
+                        ? "lua"
+                        : name.endsWith(".json")
+                            ? "json"
+                            : "plaintext";
+
+                models[name] =
+                    monaco.editor.createModel(
+                        files[name] || "",
+                        language
+                    );
+
+            }
+
+            editor.setModel(models[name]);
+
+            document.getElementById("tabName").textContent = name;
+
+            document.getElementById("fileName").textContent = name;
+
+            refreshTree();
+
+        }
+
+        function saveCurrentModel() {
+
+            if (!editor || !currentFile) return;
+
+            files[currentFile] =
+                editor.getValue();
+
+        }
+
+        function saveFile() {
+
+            saveCurrentModel();
+
+            const content =
+                files[currentFile];
+
+            const blob =
+                new Blob([content], {
+                    type: "text/plain;charset=utf-8"
+                });
+
+            const url =
+                URL.createObjectURL(blob);
+
+            const anchor =
+                document.createElement("a");
+
+            anchor.href = url;
+            anchor.download = currentFile;
+
+            document.body.appendChild(anchor);
+
+            anchor.click();
+
+            anchor.remove();
+
+            URL.revokeObjectURL(url);
+
+            document.getElementById("status").textContent =
+                "Saved";
+
+            printConsole(
+                "Saved " + currentFile,
+                "console-success"
+            );
+
+        }
+
+        function createFile() {
+
+            const name =
+                prompt(
+                    "File name:",
+                    "new.lua"
+                );
+
+            if (!name) return;
+
+            if (files[name]) {
+
+                alert("File already exists.");
+
+                return;
+
+            }
+
+            files[name] = "";
+
+            openFile(name);
+
+        }
+
+        function loadFile() {
+
+            const input =
+                document.createElement("input");
+
+            input.type = "file";
+
+            input.accept =
+                ".lua,.txt,.json";
+
+            input.onchange = () => {
+
+                const file =
+                    input.files[0];
+
+                if (!file) return;
+
+                const reader =
+                    new FileReader();
+
+                reader.onload = () => {
+
+                    files[file.name] =
+                        reader.result;
+
+                    if (models[file.name]) {
+
+                        models[file.name].setValue(
+                            reader.result
+                        );
+
+                    }
+
+                    openFile(file.name);
+
+                    printConsole(
+                        "Opened " + file.name,
+                        "console-success"
+                    );
+
+                };
+
+                reader.readAsText(file);
+
+            };
+
+            input.click();
+
+        }
+
+        function executeLua() {
+
+            saveCurrentModel();
+
+            clearConsole();
+
+            document.getElementById("status").textContent =
+                "Running";
+
+            printConsole(
+                "> " + currentFile,
+                "console-info"
+            );
+
+            try {
+
+                if (!currentFile.endsWith(".lua")) {
+
+                    throw new Error(
+                        "Only Lua files can be executed."
+                    );
+
+                }
+
+                const code =
+                    files[currentFile];
+
+                const lua =
+                    fengari;
+
+                const L =
+                    lua.luaL_newstate();
+
+                lua.lualib.luaL_openlibs(L);
+
+                const originalPrint =
+                    lua.lua_getglobal;
+
+                lua.lua_getglobal =
+                    function (state, name) {
+
+                        return originalPrint(
+                            state,
+                            name
+                        );
+
+                    };
+
+                const result =
+                    lua.luaL_loadstring(
+                        L,
+                        lua.to_luastring(code)
+                    );
+
+                if (result !== lua.lua.OK) {
+
+                    const error =
+                        lua.to_jsstring(
+                            lua.lua_tostring(
+                                L,
+                                -1
+                            )
+                        );
+
+                    throw new Error(error);
+
+                }
+
+                const callResult =
+                    lua.lua_pcall(
+                        L,
+                        0,
+                        lua.lua.MULTRET,
+                        0
+                    );
+
+                if (callResult !== lua.lua.OK) {
+
+                    const error =
+                        lua.to_jsstring(
+                            lua.lua_tostring(
+                                L,
+                                -1
+                            )
+                        );
+
+                    throw new Error(error);
+
+                }
+
+                lua.lua_close(L);
+
+                printConsole(
+                    "✓ Script finished successfully.",
+                    "console-success"
+                );
+
+                document.getElementById("status").textContent =
+                    "Ready";
+
+            } catch (error) {
+
+                printConsole(
+                    "✕ " + error.message,
+                    "console-error"
+                );
+
+                document.getElementById("status").textContent =
+                    "Error";
+
+            }
+
+        }
+
+        require.config({
+
+            paths: {
+                vs:
+                    "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+            }
+
+        });
+
+        require(
+            ["vs/editor/editor.main"],
+            function (monacoInstance) {
+
+                window.monaco =
+                    monacoInstance;
+
+                monaco.languages.register({
+                    id: "lua"
+                });
+
+                monaco.languages.setMonarchTokensProvider(
+                    "lua",
+                    {
+
+                        keywords: [
+                            "and",
+                            "break",
+                            "do",
+                            "else",
+                            "elseif",
+                            "end",
+                            "false",
+                            "for",
+                            "function",
+                            "goto",
+                            "if",
+                            "in",
+                            "local",
+                            "nil",
+                            "not",
+                            "or",
+                            "repeat",
+                            "return",
+                            "then",
+                            "true",
+                            "until",
+                            "while"
+                        ],
+
+                        tokenizer: {
+
+                            root: [
+
+                                [
+                                    /--.*$/,
+                                    "comment"
+                                ],
+
+                                [
+                                    /--\[\[[\s\S]*\]\]/,
+                                    "comment"
+                                ],
+
+                                [
+                                    /"(?:[^"\\]|\\.)*"/,
+                                    "string"
+                                ],
+
+                                [
+                                    /'(?:[^'\\]|\\.)*'/,
+                                    "string"
+                                ],
+
+                                [
+                                    /\b\d+(?:\.\d+)?\b/,
+                                    "number"
+                                ],
+
+                                [
+                                    /[a-zA-Z_]\w*/,
+                                    {
+                                        cases: {
+                                            "@keywords": "keyword",
+                                            "@default": "identifier"
+                                        }
+                                    }
+                                ],
+
+                                [
+                                    /[{}()[\]]/,
+                                    "@brackets"
+                                ],
+
+                                [
+                                    /[=+\-*\/%^#<>~]=?|==/,
+                                    "operator"
+                                ]
+
+                            ]
+
+                        }
+
+                    }
+                );
+
+                monaco.editor.defineTheme(
+                    "lua-studio",
+                    {
+
+                        base: "vs-dark",
+
+                        inherit: true,
+
+                        rules: [
+
+                            {
+                                token: "comment",
+                                foreground: "596579"
+                            },
+
+                            {
+                                token: "keyword",
+                                foreground: "c792ea"
+                            },
+
+                            {
+                                token: "string",
+                                foreground: "a8d6a3"
+                            },
+
+                            {
+                                token: "number",
+                                foreground: "f2b880"
+                            },
+
+                            {
+                                token: "operator",
+                                foreground: "7dd3fc"
+                            }
+
+                        ],
+
+                        colors: {
+
+                            "editor.background":
+                                "#0b1016",
+
+                            "editor.foreground":
+                                "#d9e1eb",
+
+                            "editorLineNumber.foreground":
+                                "#3f4b5b",
+
+                            "editorLineNumber.activeForeground":
+                                "#8d9aad",
+
+                            "editor.lineHighlightBackground":
+                                "#101821",
+
+                            "editor.selectionBackground":
+                                "#193248",
+
+                            "editorCursor.foreground":
+                                "#6ee7b7",
+
+                            "editorIndentGuide.background1":
+                                "#18212b",
+
+                            "editorIndentGuide.activeBackground1":
+                                "#2a3949"
+
+                        }
+
+                    }
+                );
+
+                models["main.lua"] =
+                    monaco.editor.createModel(
+                        files["main.lua"],
+                        "lua"
+                    );
+
+                editor =
+                    monaco.editor.create(
+                        document.getElementById("monaco"),
+                        {
+
+                            model:
+                                models["main.lua"],
+
+                            theme:
+                                "lua-studio",
+
+                            fontFamily:
+                                "Cascadia Code, Consolas, monospace",
+
+                            fontSize: 14,
+
+                            lineHeight: 21,
+
+                            tabSize: 4,
+
+                            insertSpaces: true,
+
+                            automaticLayout: true,
+
+                            minimap: {
+                                enabled: true
+                            },
+
+                            folding: true,
+
+                            smoothScrolling: true,
+
+                            cursorSmoothCaretAnimation:
+                                "on",
+
+                            bracketPairColorization: {
+                                enabled: true
+                            },
+
+                            guides: {
+                                bracketPairs: true
+                            },
+
+                            wordWrap:
+                                "off",
+
+                            padding: {
+                                top: 10,
+                                bottom: 10
+                            },
+
+                            scrollBeyondLastLine:
+                                false
+
+                        }
+                    );
+
+                editor.onDidChangeModelContent(
+                    () => saveCurrentModel()
+                );
+
+                editor.onDidChangeCursorPosition(
+                    event => {
+
+                        document.getElementById(
+                            "cursorPosition"
+                        ).textContent =
+                            "Ln " +
+                            event.position.lineNumber +
+                            ", Col " +
+                            event.position.column;
+
+                    }
+                );
+
+                refreshTree();
+
+                printConsole(
+                    "Lua Studio ready.",
+                    "console-success"
+                );
+
+                printConsole(
+                    "Press F6 or click Run to execute Lua.",
+                    "console-info"
+                );
+
+            }
+        );
+
+        document
+            .getElementById("runLua")
+            .onclick = executeLua;
+
+        document
+            .getElementById("saveFile")
+            .onclick = saveFile;
+
+        document
+            .getElementById("openFile")
+            .onclick = loadFile;
+
+        document
+            .getElementById("newFile")
+            .onclick = createFile;
+
+        document
+            .getElementById("newFileExplorer")
+            .onclick = createFile;
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "F6"
+                ) {
+
+                    event.preventDefault();
+
+                    executeLua();
+
+                }
+
+                if (
+                    (event.ctrlKey || event.metaKey) &&
+                    event.key.toLowerCase() === "s"
+                ) {
+
+                    event.preventDefault();
+
+                    saveFile();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+    "database": {
+        "host": "localhost",
+        "user": "root",
+        "password": "@kmzWay87aa",
+        "name": "hso_lua",
+        "port": 3306
+    },
+    "server": {
+        "port": 19129
+    },
+    "web": {
+        "port": 80
+    }
+}
