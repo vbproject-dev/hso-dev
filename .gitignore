@@ -2,8 +2,9 @@
 !/.gitignore
 !/README.md
 !/assets/
- /assets/*
+/assets/*
 !/assets/src/
 !/assets/src/**
 !/assets/res/
 !/assets/res/**
+assets/res/config.json
