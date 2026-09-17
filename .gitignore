@@ -1,0 +1,9 @@
+/*
+!/.gitignore
+!/README.md
+!/assets/
+ /assets/*
+!/assets/src/
+!/assets/src/**
+!/assets/res/
+!/assets/res/**
