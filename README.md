@@ -1,4 +1,4 @@
-# HSO VBPixel Server Project
+# HSO VBPixel Server
 
 HSO game server developed by VBPixel. The server is written in C++ and integrates **Lua 5.4** for game scripting and server-side logic.
 
@@ -68,9 +68,8 @@ tail -f server.log
 ```bash
 cd hso-dev
 git pull
-
 ```
 
-## License
+## Project
 
-VBPixel private project.
+A personal project by VBPixel focused on C++ game server development, Lua scripting, networking, and database integration. The project is actively maintained and continues to evolve.
