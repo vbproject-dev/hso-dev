@@ -1,9 +1,12 @@
 # HSO VBPixel Server Project
 
+HSO game server developed by VBPixel. The server is written in C++ and integrates **Lua 5.4** for game scripting and server-side logic.
+
 ## Requirements
 
-* Linux
+* Ubuntu 22.04 or newer
 * Git
+* MariaDB/MySQL
 
 ## Installation
 
@@ -22,13 +25,11 @@ chmod +x SV
 
 ## Configuration
 
-Create the configuration file:
+Create:
 
 ```text
 assets/res/config.json
 ```
-
-Add:
 
 ```json
 {
@@ -48,61 +49,28 @@ Add:
 }
 ```
 
-Replace `YOUR_DATABASE_PASSWORD` with your MariaDB/MySQL password.
-
-### Database Configuration
-
-| Option     | Description       | Default     |
-| ---------- | ----------------- | ----------- |
-| `host`     | Database host     | `localhost` |
-| `user`     | Database username | `root`      |
-| `password` | Database password | -           |
-| `name`     | Database name     | `hso_lua`   |
-| `port`     | Database port     | `3306`      |
-
-### Server Configuration
-
-| Option | Description     | Default |
-| ------ | --------------- | ------- |
-| `port` | HSO server port | `19129` |
-
-### Web Configuration
-
-| Option | Description     | Default |
-| ------ | --------------- | ------- |
-| `port` | Web server port | `80`    |
+Replace `YOUR_DATABASE_PASSWORD` with your database password.
 
 ## Start Server
 
-Start the server in the background:
-
 ```bash
 nohup ./SV > server.log 2>&1 &
 ```
 
-The server will continue running after the terminal is closed.
+View logs:
 
+```bash
+tail -f server.log
+```
 
 ## Update
 
-Pull the latest changes:
-
 ```bash
+cd hso-dev
 git pull
-```
 
-Make sure the server is executable:
-
-```bash
-chmod +x SV
-```
-
-Start the server:
-
-```bash
-nohup ./SV > server.log 2>&1 &
 ```
 
 ## License
 
-VBPixel's private project
+VBPixel private project.
