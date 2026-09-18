@@ -126,7 +126,8 @@ function FileController:delete(request)
         return { error = "Missing path" }
     end
 
-    local ok, err = File.remove(path)
+    local recursive = FileService:isDirectory(path)
+    local ok, err = File.remove(path, recursive)
 
     if not ok then
         return { error = err }

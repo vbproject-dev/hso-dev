@@ -228,7 +228,7 @@ function GameHandler.onFireMonster(session, request)
         if skill:isAttackSkill() then
             if targetCount > 1 then
                 local monsters = zone.monsters:filter(function(m)
-                    return m:isInDistance(monster, distance)
+                    return not m:isDead() and m:isInDistance(monster, distance)
                 end)
 
                 if player:useSkill(skill) then

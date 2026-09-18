@@ -9,7 +9,7 @@ local Main          = class("Main")
 function Main:configure()
     _G.SCREEN_WIDTH = 900  --1280
     _G.SCREEN_HEIGHT = 480 --720
-    GFX = false
+    GFX = true
     return {
         useGraphics = GFX,
         title = "HSO",
@@ -25,6 +25,16 @@ function Main:init()
     end
     DEBUG = true
     ServerManager.instance():init()
+
+    -- local result, err = Process.exec("git", {
+    --     "status"
+    -- })
+
+    -- if not result then
+    --     log("Failed to execute git status: " .. tostring(err))
+    -- end
+
+    -- log("Git status result: " .. result.stdout)
 end
 
 function Main:onUpdate(dt)
