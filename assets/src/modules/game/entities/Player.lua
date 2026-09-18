@@ -139,10 +139,6 @@ function Player:getWearing(slot)
     return self.wearing:get(slot)
 end
 
-function Player:isSlotEmpty(slot)
-    return not self.wearing:get(slot)
-end
-
 function Player:useMoney(moneyType, amount)
     amount = amount or 0
 

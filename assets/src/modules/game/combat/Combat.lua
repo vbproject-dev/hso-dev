@@ -1,8 +1,11 @@
-local DamageType  = require "modules.game.combat.DamageType"
-local StatIds     = require "modules.game.stats.StatIds"
-local GameWritter = require "modules.writters.GameWritter"
-local ObjectType  = require "modules.game.entities.ObjectType"
-local Combat      = {}
+local DamageType            = require "modules.game.combat.DamageType"
+local StatIds               = require "modules.game.stats.StatIds"
+local GameWritter           = require "modules.writters.GameWritter"
+local ObjectType            = require "modules.game.entities.ObjectType"
+local Combat                = {}
+
+local DEFENSE_CURVE_SCALE   = 1
+local MAX_DEFENSE_REDUCTION = 0.80 -- hard cap so no target is ever near unkillable
 
 function Combat.dealDamageTo(player, target, skill)
     if target:isDead() then
@@ -90,7 +93,7 @@ function Combat.calculateBaseDamage(stats, damageType)
     if damageType == DamageType.PHYSICAL then
         element = stats:get(StatIds.PHYSICAL_DAMAGE)
     elseif damageType == DamageType.FIRE then
-        element = stats:get(StatIds.PHYSICAL_DAMAGE)
+        element = stats:get(StatIds.FIRE_DAMAGE)
     elseif damageType == DamageType.ICE then
         element = stats:get(StatIds.ICE_DAMAGE)
     elseif damageType == DamageType.POISON then
@@ -166,6 +169,23 @@ function Combat.applyDamageVariance(damage)
     return damage + math.random(-variance, variance)
 end
 
+function Combat.calculateDefenseReduction(attackerStats, targetStats, incomingDamage)
+    local defense = targetStats:get(StatIds.DEFENSE)
+    local plusDefense = targetStats:get(StatIds.PLUS_DEFENSE)
+    defense = defense * (1 + plusDefense / 10000)
+
+    local piercing = attackerStats:get(StatIds.PIERCING_ATTACK)
+    local penResist = targetStats:get(StatIds.ARMOR_PENETRATION_RESISTANCE)
+    local effectivePiercing = math.max(0, piercing - penResist)
+
+    defense = math.max(0, defense * (1 - effectivePiercing / 10000))
+
+    local reference = math.max(1, incomingDamage) * DEFENSE_CURVE_SCALE
+    local reduction = defense / (defense + reference)
+
+    return math.min(MAX_DEFENSE_REDUCTION, reduction)
+end
+
 function Combat.calculateFinalDamage(attackerStats, stats, damage, damageType)
     local damage = math.max(0, damage or 0)
     local reduction = 0
@@ -177,6 +197,8 @@ function Combat.calculateFinalDamage(attackerStats, stats, damage, damageType)
         isPenetration = false,
         damage = 0,
     }
+
+    damage = damage * (1 - Combat.calculateDefenseReduction(attackerStats, stats, damage))
 
     if damageType == DamageType.PHYSICAL then
         reduction = stats:get(StatIds.PHYSICAL_RESIST)
