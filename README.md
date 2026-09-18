@@ -1,6 +1,4 @@
-# HSO Dev Server
-
-HSO game server project.
+# HSO VBPixel Server Project
 
 ## Requirements
 
@@ -84,25 +82,6 @@ nohup ./SV > server.log 2>&1 &
 
 The server will continue running after the terminal is closed.
 
-View the server log:
-
-```bash
-tail -f server.log
-```
-
-## Stop Server
-
-Find the running server:
-
-```bash
-pgrep -af SV
-```
-
-Stop the server:
-
-```bash
-pkill -f ./SV
-```
 
 ## Update
 
@@ -124,18 +103,6 @@ Start the server:
 nohup ./SV > server.log 2>&1 &
 ```
 
-## Ports
-
-Default ports:
-
-| Service       |    Port |
-| ------------- | ------: |
-| HSO Server    | `19129` |
-| Web Server    |    `80` |
-| MariaDB/MySQL |  `3306` |
-
-Make sure the required ports are available and allowed through the server firewall.
-
 ## License
 
-Private project.
+VBPixel's private project
