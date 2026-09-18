@@ -9,7 +9,7 @@ local Main          = class("Main")
 function Main:configure()
     _G.SCREEN_WIDTH = 900  --1280
     _G.SCREEN_HEIGHT = 480 --720
-    GFX = true
+    GFX = false
     return {
         useGraphics = GFX,
         title = "HSO",
