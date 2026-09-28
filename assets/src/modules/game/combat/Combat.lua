@@ -178,9 +178,6 @@ end
 
 function Combat.calculateDefenseReduction(targetStats, incomingDamage)
     local defense = targetStats:get(StatIds.DEFENSE)
-    local plusDefense = targetStats:get(StatIds.PLUS_DEFENSE)
-    defense = defense * (1 + plusDefense / 10000)
-
     local reference = math.max(1, incomingDamage) * DEFENSE_CURVE_SCALE
     local reduction = defense / (defense + reference)
 

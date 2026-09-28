@@ -469,4 +469,29 @@ function GameWritter.itemRebuild(player, typeAction, type, text, itemId)
     player:send(packet)
 end
 
+function GameWritter.effectFromServer(player, type, fromId, target)
+    local packet = Packet.new(Cmd.EFF_SERVER)
+
+
+    packet:writeByte(type)
+    packet:writeByte(target.type)
+    packet:writeShort(target.id)
+
+    packet:writeShort(5000) -- DURATION
+    packet:writeShort(5000) -- VIBRATE DURATION
+    packet:writeShort(fromId)
+
+    player:send(packet)
+end
+
+function GameWritter.effectWeather(player, type)
+    local packet = Packet.new(Cmd.EFF_WEATHER)
+
+
+    packet:writeByte(type)
+    packet:writeShort(50)
+    packet:writeShort(5000)
+    player:send(packet)
+end
+
 return GameWritter

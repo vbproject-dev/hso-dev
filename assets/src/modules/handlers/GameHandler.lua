@@ -13,6 +13,7 @@ local ItemCategory     = require "modules.game.items.ItemCategory"
 local Slot             = require "modules.game.items.Slot"
 local ShopType         = require "modules.game.shop.ShopType"
 local UpgradeService   = require "modules.game.upgrade.UpgradeService"
+local UpgradeConfig    = require "modules.game.upgrade.UpgradeConfig"
 local GameHandler      = {}
 
 
@@ -232,6 +233,11 @@ function GameHandler.onMiniGame(session, request)
         addTeleport(kota, "Kota Harta Karun", 33, 432, 480)
         addTeleport(kota, "Kota Pelabuhan", 67, 576, 222)
         addTeleport(kota, "Kota Musim Dingin", 93, 498, 336)
+
+        menu:add("Test", function()
+            -- GameWritter.effectFromServer(player, 10, player.id, player)
+            GameWritter.effectWeather(player, 1)
+        end)
         player.menu = menu
         GameWritter.openMenu(player, menu)
     end)
@@ -357,6 +363,9 @@ function GameHandler.onGoHome(session, request)
             player:recalculateStats()
             local mapId = zone:getMap().id
             GameWorld.instance():joinMap(player, mapId)
+        else
+            player:recalculateStats()
+            player:teleport(1, 480, 360)
         end
     end)
 end
@@ -448,6 +457,11 @@ function GameHandler.onRebuildItem(session, request)
                         return
                     end
 
+                    if item.plus >= UpgradeConfig.MAX_LEVEL then
+                        CommonWritter.noticeBox(session, "Level sudah maksimal")
+                        return
+                    end
+
                     local chance = UpgradeService.getChance(item, player.upgradeState.supportItem) .. "%"
 
                     player.upgradeState.item = item
@@ -511,17 +525,11 @@ function GameHandler.onRebuildItem(session, request)
                     GameWritter.itemRebuild(player, request.typeAction, 3, "Upgrade Berhasil")
                 elseif result == UpgradeService.Result.FAIL then
                     GameWritter.itemRebuild(player, request.typeAction, 4, "Upgrade Gagal")
-                else
-                    CommonWritter.noticeBox(player.session, "Level sudah maksimal")
                 end
 
                 GameWritter.updateInventory(player)
             end
         end
-        -- local item = player.inventory:getItem(request.itemId, request.category)
-        -- if not item then
-        --     return
-        -- end
     end)
 end
 
