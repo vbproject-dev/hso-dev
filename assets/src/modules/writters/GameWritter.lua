@@ -487,7 +487,6 @@ end
 function GameWritter.effectWeather(player, type)
     local packet = Packet.new(Cmd.EFF_WEATHER)
 
-
     packet:writeByte(type)
     packet:writeShort(50)
     packet:writeShort(5000)
