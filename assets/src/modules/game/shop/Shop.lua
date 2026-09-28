@@ -2,6 +2,7 @@ local Shop = class("Shop")
 function Shop:ctor(data)
     self.id = data.id
     self.name = data.name
+    self.type = data.type
     self.category = data.category
     self.items = ArrayList.new()
 

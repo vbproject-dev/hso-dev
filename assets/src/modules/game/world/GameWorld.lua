@@ -1,5 +1,6 @@
 local Map = require("modules.game.world.Map")
 local GameData = require("database.GameData")
+local GameEventManager = require("modules.game.events.GameEventManager")
 
 local GameWorld = class("GameWorld")
 
@@ -64,6 +65,7 @@ function GameWorld:registerPlayer(player, session)
     end
 
     player.online = true
+    GameEventManager.dispatch("onPlayerJoin", player)
 
     log("[GameWorld] Player registered: %s (ID: %d) | Total Online: %d",
         player.name or "Unknown", player.id, self:getOnlineCount())
@@ -93,6 +95,7 @@ function GameWorld:unregisterPlayer(playerOrSession)
 
     self.playerList:remove(player)
     player.online = false
+    GameEventManager.dispatch("onPlayerLeave", player)
 
     log("[GameWorld] Player unregistered: %s (ID: %d) | Total Online: %d",
         player.name or "Unknown", player.id, self:getOnlineCount())
@@ -139,6 +142,8 @@ function GameWorld:update(dt)
     self.mapList:forEach(function(map)
         map:update(dt)
     end)
+
+    GameEventManager.update(dt)
 end
 
 function GameWorld:removeAllSessions()

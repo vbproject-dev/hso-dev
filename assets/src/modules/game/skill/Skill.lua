@@ -7,7 +7,7 @@ Skill.PHYSICAL_SKILLS = {
     [3] = true,
     [5] = true,
     [7] = true,
-    [19] = true
+    [20] = true
 }
 
 function Skill:ctor(level, data)
@@ -87,8 +87,18 @@ function Skill:getMaxTarget()
     return self.levelData and self.levelData.targetCount or 1
 end
 
+function Skill:isAOE()
+    return self:getMaxTarget() > 1
+end
+
 function Skill:isPhysicalSkill(skillId)
-    return Skill.PHYSICAL_SKILLS[skillId] == true
+    for __, option in pairs(self.levelData.options) do
+        if option.id == 0 or option.id == 7 then
+            return true
+        end
+    end
+
+    return false
 end
 
 function Skill:isBuffSkill()

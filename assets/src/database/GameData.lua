@@ -1,4 +1,5 @@
 local GameData = {
+
     settings = ArrayList.new(),
     monsters = ArrayList.new(),
     equipments = ArrayList.new(),
@@ -6,8 +7,10 @@ local GameData = {
     potions = ArrayList.new(),
     options = ArrayList.new(),
     maps = ArrayList.new(),
+    itemMapData = ArrayList.new(),
     npcs = ArrayList.new(),
     shops = ArrayList.new(),
+
 
     skills = {
         [0] = ArrayList.new(),
@@ -30,7 +33,9 @@ function GameData.load()
         { table = "map_data",       field = "maps" },
         { table = "npc",            field = "npcs" },
         { table = "shop",           field = "shops" },
-        { table = "skill",          field = "skills",    groupBy = "role" }
+        { table = "item_map",       field = "itemMapData" },
+        { table = "skill",          field = "skills",     groupBy = "role" }
+
     }
 
     for _, dataset in ipairs(datasets) do
@@ -95,6 +100,38 @@ end
 
 function GameData.getShop(id)
     return GameData.shops:findFirst(function(data) return data.id == id end)
+end
+
+function GameData.getItemMap(id)
+    return GameData.itemMapData:findFirst(function(data) return data.id == id end)
+end
+
+function GameData.getItemMapBytes()
+    local packet = Packet.new()
+    packet:writeShort(GameData.itemMapData:size())
+    GameData.itemMapData:forEachIndexed(function(index, itemMap)
+        packet:writeShort(itemMap.img_id)
+        packet:writeByte(0)
+        packet:writeShort(itemMap.x)
+        packet:writeShort(itemMap.y)
+
+        packet:writeByte(#itemMap.blocks)
+        for __, block in ipairs(itemMap.blocks) do
+            packet:writeByte(block.x)
+            packet:writeByte(block.y)
+        end
+    end)
+
+    local Helper = require("utils.Helper")
+    local bytes = Helper.stringToTable(packet:getData())
+
+    packet = Packet.new()
+    packet:writeShort(#bytes)
+    for i = 1, #bytes do
+        packet:writeByte(bytes[i])
+    end
+
+    return packet:getData()
 end
 
 function GameData.getItem(id, category)

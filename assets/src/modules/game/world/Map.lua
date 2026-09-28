@@ -151,6 +151,12 @@ function Map:getZoneStatusList()
     end)
 end
 
+function Map:getItemMaps(id)
+    return self.itemMap:filter(function(item)
+        return item.id == id
+    end)
+end
+
 function Map:getWarpAt(x, y)
     local width, height = 48, 48
 

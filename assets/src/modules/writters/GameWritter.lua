@@ -2,6 +2,7 @@ local Cmd         = require "network.Cmd"
 local GameData    = require "database.GameData"
 local PartManager = require "database.PartManager"
 local ObjectType  = require "modules.game.entities.ObjectType"
+local ShopType    = require "modules.game.shop.ShopType"
 local GameWritter = {}
 
 function GameWritter.objectMove(player, mover)
@@ -105,9 +106,9 @@ local function updateInventory(player, inventory, type)
             packet:writeByte(item.color)
             packet:writeByte(1)
             packet:writeByte(item.lock and 0 or 1)
-
-            packet:writeByte(item.options:size())
-            item.options:forEach(function(option)
+            local stats = item:getOptions()
+            packet:writeByte(stats:size())
+            stats:forEach(function(option)
                 packet:writeByte(option.id)
                 packet:writeInt(option.value)
             end)
@@ -175,8 +176,9 @@ local function updateStorage(player, inventory, type)
             packet:writeByte(1)
             packet:writeByte(item.lock and 0 or 1)
 
-            packet:writeByte(item.options:size())
-            item.options:forEach(function(option)
+            local stats = item:getOptions()
+            packet:writeByte(stats:size())
+            stats:forEach(function(option)
                 packet:writeByte(option.id)
                 packet:writeInt(option.value)
             end)
@@ -212,12 +214,11 @@ local function updateStorage(player, inventory, type)
     player:send(packet)
 end
 
-function GameWritter.openShop(player)
-    local shop = player.shop
-    if shop.category == 3 then
+function GameWritter.openShop(player, shop)
+    if shop.type == ShopType.SHOP_EQUIPMENT then
         local packet = Packet.new(Cmd.NPC_INFO)
         packet:writeUTF(shop.name)
-        packet:writeByte(1)
+        packet:writeByte(ShopType.SHOP_EQUIPMENT)
         packet:writeShort(shop.items:size())
         shop.items:forEach(function(itemData)
             local equipment = GameData.getEquipment(itemData.id)
@@ -239,20 +240,20 @@ function GameWritter.openShop(player)
         end)
 
         player:send(packet)
-    elseif shop.category == 4 then
+    elseif shop.type == ShopType.SHOP_POTION then
         local packet = Packet.new(Cmd.NPC_INFO)
         packet:writeUTF(shop.name)
-        packet:writeByte(0)
+        packet:writeByte(ShopType.SHOP_POTION)
         packet:writeShort(shop.items:size())
         shop.items:forEach(function(itemData)
             packet:writeShort(itemData.id)
         end)
 
         player:send(packet)
-    elseif shop.category == 7 then
+    elseif shop.type == ShopType.SHOP_MATERIAL then
         local packet = Packet.new(Cmd.NPC_INFO)
         packet:writeUTF(shop.name)
-        packet:writeByte(4)
+        packet:writeByte(ShopType.SHOP_MATERIAL)
         packet:writeShort(shop.items:size())
         shop.items:forEach(function(itemData)
             packet:writeShort(itemData.id)
@@ -260,6 +261,18 @@ function GameWritter.openShop(player)
 
         player:send(packet)
     end
+end
+
+function GameWritter.openUI(player, type)
+    local packet = Packet.new(Cmd.NPC_INFO)
+    if type == ShopType.SHOP_REBUILD then
+        packet:writeUTF("Upgrade Item")
+        packet:writeByte(ShopType.SHOP_REBUILD)
+        packet:writeShort(0)
+    end
+
+    player.uiState = type
+    player:send(packet)
 end
 
 function GameWritter.updateInventory(player)
@@ -274,30 +287,29 @@ function GameWritter.updateStorage(player)
     updateStorage(player, player.bank, 3)
 end
 
-function GameWritter.itemMap(player, id)
+function GameWritter.effectMap(player, npcId, effectId, x, y, dx, dy, hOne, typeEffect)
     local zoomLv = player.session:get("zoom")
-    local data = PartManager.getByZoom(zoomLv, 111, id)
+    local data = PartManager.getByZoom(zoomLv, 111, effectId)
     if not data then return end
 
     local packet = Packet.new(Cmd.LOAD_IMAGE_DATA_AUTO_EFF)
     packet:writeByte(1)
+    packet:writeShort(#data)
+    packet:writeBytes(data)
 
-    packet:writeShort(#data.imageData)
-    packet:writeBytes(data.imageData)
+    packet:writeByte(dx) -- block x
+    packet:writeByte(dy) -- block y
+    packet:writeByte(effectId)
 
-    packet:writeByte(0) -- dx
-    packet:writeByte(0) -- dy
-    packet:writeShort(0)
+    packet:writeShort(x)              -- x
+    packet:writeShort(y)              -- y
+    packet:writeByte(typeEffect or 0) -- Type Effect
+    packet:writeByte(hOne)            -- hOne
 
-    packet:writeShort(player.x / 24) -- x
-    packet:writeShort(player.y / 24) -- y
-    packet:writeByte(0)              -- Type Effect
-    packet:writeByte(0)              -- hOne
+    packet:writeShort(npcId)          -- objectID
+    packet:writeShort(0)              -- Loop
 
-    packet:writeShort(3000)          -- objectID
-    packet:writeShort(0)             -- Loop
-
-    packet:writeByte(1)              -- TypeObject
+    packet:writeByte(2)               -- TypeObject
     player:send(packet)
     return packet
 end
@@ -416,6 +428,44 @@ function GameWritter.openStorage(player)
     packet:writeUTF("Storage")
     packet:writeByte(3)
     packet:writeShort(0)
+    player:send(packet)
+end
+
+function GameWritter.changeMap(player)
+    if not player then return false end
+
+    return try(function()
+        local map = player:getMap()
+        local packet = Packet.new(Cmd.CHANGE_MAP)
+        packet:writeShort(map.id)
+        packet:writeShort(player.x / 24)
+        packet:writeShort(player.y / 24)
+
+        packet:writeBytes(player:getMap():toBytes())
+
+        packet:writeByte(player.isTeleport)
+        packet:writeByte(player.zone.id)
+        packet:writeByte(map.type)
+        packet:writeBoolean(map.isCity)
+        packet:writeBoolean(map.isShowHs)
+
+        player:send(packet)
+
+        -- GameWritter.effectMap(player, -10, 3, 669, 280, 3, 3, 45, 2)
+        -- GameWritter.effectMap(player, -101, 118, 442, 208, 3, 3, 45)
+    end)
+end
+
+function GameWritter.itemRebuild(player, typeAction, type, text, itemId)
+    local packet = Packet.new(Cmd.REBUILD_ITEM)
+    packet:writeByte(typeAction)
+
+    if itemId then
+        packet:writeShort(itemId)
+    end
+
+    packet:writeByte(type)
+    packet:writeUTF(text)
     player:send(packet)
 end
 

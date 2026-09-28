@@ -1,10 +1,12 @@
 local Item = require("modules.game.items.Item")
 local GameData = require("database.GameData")
+local ItemCategory = require("modules.game.items.ItemCategory")
+
 local Equipment = class("Equipment", Item)
 
 function Equipment:ctor(data)
     Equipment.super.ctor(self, data)
-    self.category = 3
+    self.category = ItemCategory.EQUIPMENT
     self.info = GameData.getEquipment(data.id)
     self.options = ArrayList.new(data.options or self.info.option)
     self.plus = data.plus or 0
@@ -24,10 +26,36 @@ function Equipment:toWearingTable()
         id = self.id,
         plus = self.plus,
         color = self.color,
-        lock = self.lock,
+        lock = true,
         expired = self.expired,
         options = self.options:toTable()
     }
+end
+
+function Equipment:getOptions()
+    local stats = ArrayList.new()
+
+    self.options:forEach(function(opt)
+        local id = opt.id < 0 and opt.id + 256 or opt.id
+        local optData = GameData.getOption(id)
+
+        if optData then
+            local value = opt.value
+
+            if optData.percent == 1 then
+                value = value + (value * optData.bonus_upgrade / 100 * self.plus)
+            else
+                value = value + (optData.bonus_upgrade * self.plus)
+            end
+
+            stats:add({
+                id = id,
+                value = value
+            })
+        end
+    end)
+
+    return stats
 end
 
 function Equipment:toInventoryTable()

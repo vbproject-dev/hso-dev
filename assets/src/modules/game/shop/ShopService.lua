@@ -11,8 +11,9 @@ function ShopService.openShop(player, id)
         CommonWritter.noticeBox(player.session, "Shop not found")
         return
     end
-    player.shop = Shop.new(shopData)
-    GameWritter.openShop(player)
+    local shop = Shop.new(shopData)
+    player.shop = shop
+    GameWritter.openShop(player, shop)
 end
 
 function ShopService.buyItem(player, request)

@@ -4,8 +4,16 @@ local GameWritter           = require "modules.writters.GameWritter"
 local ObjectType            = require "modules.game.entities.ObjectType"
 local Combat                = {}
 
+-- Diminishing-returns curve: defense / (defense + damage * SCALE).
+-- Uses the incoming hit itself as the reference scale instead of a
+-- fixed/level-based constant. DEFENSE and the damage stats both derive
+-- from the same AttributeFormulas growth curves, so they already scale
+-- together across levels -- comparing defense directly to the hit means
+-- mitigation stays consistent with no separate constant to retune every
+-- time AttributeFormulas changes.
+-- SCALE < 1 makes defense relatively stronger, SCALE > 1 weaker.
 local DEFENSE_CURVE_SCALE   = 1
-local MAX_DEFENSE_REDUCTION = 0.80 -- hard cap so no target is ever near unkillable
+local MAX_DEFENSE_REDUCTION = 0.80 -- hard cap so no target is ever near-unkillable
 
 function Combat.dealDamageTo(player, target, skill)
     if target:isDead() then
@@ -28,6 +36,7 @@ function Combat.dealDamageTo(player, target, skill)
 
         finalDamage = result.damage
 
+        log("dmgType %s actual damage %d final damage %d", tostring(skill:getDamageType()), skillDamage, finalDamage)
         if result.isPenetration then
             table.insert(textDamage, { id = 1, value = finalDamage })
         end
@@ -48,7 +57,7 @@ function Combat.dealDamageTo(player, target, skill)
         end
 
         -- Reflect Damage
-        if not target:isDead() then
+        if not target:isDead() and target.type == ObjectType.PLAYER then
             local reflect = Combat.calculateReflectDamage(target.stats, finalDamage)
             if reflect > 0 then
                 player:takeDamage(reflect)
@@ -57,8 +66,8 @@ function Combat.dealDamageTo(player, target, skill)
         end
 
         -- Lifesteal
-        if not player:isDead() then
-            local lifesteal = Combat.calculateLifesteal(player.stats, finalDamage)
+        if not player:isDead() and target.type == ObjectType.PLAYER then
+            local lifesteal = math.floor(finalDamage * player.stats:get(StatIds.LIFE_STEAL) / 10000)
             if lifesteal > 0 then
                 player.hp = math.min(player.maxHp, player.hp + lifesteal)
                 table.insert(textDamage, { id = 2, value = lifesteal })
@@ -66,8 +75,8 @@ function Combat.dealDamageTo(player, target, skill)
         end
 
         -- Manasteal
-        if not player:isDead() then
-            local manasteal = Combat.calculateManaSteal(player.stats, finalDamage)
+        if not player:isDead() and target.type == ObjectType.PLAYER then
+            local manasteal = math.floor(finalDamage * player.stats:get(StatIds.MANA_STEAL) / 10000)
             if manasteal > 0 then
                 player.mp = math.min(player.maxMp, player.mp + manasteal)
                 table.insert(textDamage, { id = 3, value = manasteal })
@@ -97,7 +106,7 @@ function Combat.calculateBaseDamage(stats, damageType)
     elseif damageType == DamageType.ICE then
         element = stats:get(StatIds.ICE_DAMAGE)
     elseif damageType == DamageType.POISON then
-        element = stats:get(StatIds.POISON)
+        element = stats:get(StatIds.POISON_DAMAGE)
     elseif damageType == DamageType.LIGHTING then
         element = stats:get(StatIds.LIGHTNING_DAMAGE)
     elseif damageType == DamageType.LIGHT then
@@ -144,12 +153,10 @@ function Combat.isCritical(stats)
     return math.random(10000) <= stats:get(StatIds.CRITICAL_RATE)
 end
 
-function Combat.isPenetration()
-    return math.random(100) <= 10
-end
-
 function Combat.isEvade(stats)
-    return math.random(10000) <= stats:get(StatIds.EVADE)
+    local evade = stats:get(StatIds.EVADE)
+    local chance = evade / (evade + 5000) * 10000
+    return math.random(10000) <= chance
 end
 
 function Combat.calculateLifesteal(stats, damage)
@@ -169,16 +176,10 @@ function Combat.applyDamageVariance(damage)
     return damage + math.random(-variance, variance)
 end
 
-function Combat.calculateDefenseReduction(attackerStats, targetStats, incomingDamage)
+function Combat.calculateDefenseReduction(targetStats, incomingDamage)
     local defense = targetStats:get(StatIds.DEFENSE)
     local plusDefense = targetStats:get(StatIds.PLUS_DEFENSE)
     defense = defense * (1 + plusDefense / 10000)
-
-    local piercing = attackerStats:get(StatIds.PIERCING_ATTACK)
-    local penResist = targetStats:get(StatIds.ARMOR_PENETRATION_RESISTANCE)
-    local effectivePiercing = math.max(0, piercing - penResist)
-
-    defense = math.max(0, defense * (1 - effectivePiercing / 10000))
 
     local reference = math.max(1, incomingDamage) * DEFENSE_CURVE_SCALE
     local reduction = defense / (defense + reference)
@@ -186,19 +187,30 @@ function Combat.calculateDefenseReduction(attackerStats, targetStats, incomingDa
     return math.min(MAX_DEFENSE_REDUCTION, reduction)
 end
 
+function Combat.rollPiercing(attackerStats, targetStats)
+    local chance = attackerStats:get(StatIds.PIERCING_ATTACK)
+    local resist = targetStats:get(StatIds.ARMOR_PENETRATION_RESISTANCE)
+    local effectiveChance = math.max(0, chance - resist)
+
+    return math.random(10000) <= effectiveChance
+end
+
 function Combat.calculateFinalDamage(attackerStats, stats, damage, damageType)
     local damage = math.max(0, damage or 0)
     local reduction = 0
     local reduceResist = 0
     local blockDamage = 0
-    local penetrationDamage = 0
 
+    local isPiercing = Combat.rollPiercing(attackerStats, stats)
     local context = {
-        isPenetration = false,
+        isPenetration = isPiercing,
         damage = 0,
     }
 
-    damage = damage * (1 - Combat.calculateDefenseReduction(attackerStats, stats, damage))
+    if not isPiercing then
+        local defenseReduction = Combat.calculateDefenseReduction(stats, damage)
+        damage = damage * (1 - defenseReduction)
+    end
 
     if damageType == DamageType.PHYSICAL then
         reduction = stats:get(StatIds.PHYSICAL_RESIST)
@@ -230,14 +242,6 @@ function Combat.calculateFinalDamage(attackerStats, stats, damage, damageType)
 
     damage = damage * (1 - reduction / 10000)
     damage = damage * (1 - blockDamage / 10000)
-
-    if Combat.isPenetration() then
-        local penetration = attackerStats:get(StatIds.PIERCING_ATTACK)
-        penetrationDamage = damage * penetration / 10000
-        context.isPenetration = penetration > 0
-    end
-
-    damage = damage + penetrationDamage
 
     damage = Combat.applyDamageVariance(math.floor(damage + 0.5))
     context.damage = math.max(0, damage)

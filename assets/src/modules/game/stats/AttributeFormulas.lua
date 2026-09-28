@@ -74,10 +74,10 @@ function AttributeFormulas.compute(class, flatSums)
         return {
             [S.BASIC_DAMAGE] = str * 0.02,
             [S.PHYSICAL_DAMAGE] = str * 4,
-            [S.DEFENSE] = dex * 20,
+            [S.DEFENSE] = dex * 10,
             [S.PLUS_DEFENSE] = dex * 1,
-            [S.HP] = vit * 320,
-            [S.MP] = intel * 10,
+            [S.HP] = vit * 500,
+            [S.MP] = intel * 5,
         }
     end
 

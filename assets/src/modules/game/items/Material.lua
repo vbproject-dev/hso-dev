@@ -1,10 +1,11 @@
 local Item = require("modules.game.items.Item")
 local GameData = require("database.GameData")
+local ItemCategory = require("modules.game.items.ItemCategory")
 local Material = class("Material", Item)
 
 function Material:ctor(data)
     Material.super.ctor(self, data)
-    self.category = 7
+    self.category = ItemCategory.MATERIAL
     self.quantity = math.min(self.quantity, 3200)
     self.info = GameData.getMaterial(self.id)
 end

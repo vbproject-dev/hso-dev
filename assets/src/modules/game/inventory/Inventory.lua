@@ -1,7 +1,10 @@
-local Equipment = require "modules.game.items.Equipment"
-local Potion    = require "modules.game.items.Potion"
-local Material  = require "modules.game.items.Material"
-local Inventory = class("Inventory")
+local Equipment    = require "modules.game.items.Equipment"
+local Potion       = require "modules.game.items.Potion"
+local Material     = require "modules.game.items.Material"
+local ItemCategory = require "modules.game.items.ItemCategory"
+local Inventory    = class("Inventory")
+
+local CATEGORY     = ItemCategory
 
 function Inventory:ctor(data, capacity)
     self.maxSize = capacity or 126
@@ -39,7 +42,7 @@ end
 function Inventory:add(item, quantity)
     if not item then return false end
 
-    if item.category == 4 or item.category == 7 then
+    if item.category == CATEGORY.POTION or item.category == CATEGORY.MATERIAL then
         local existing = self:findById(item.id, item.category)
         if existing then
             existing.quantity = math.min(existing.quantity + (quantity or item.quantity), 3200)
@@ -56,9 +59,9 @@ end
 function Inventory:addFrom(id, category, quantity)
     local item
 
-    if category == 4 then
+    if category == CATEGORY.POTION then
         item = Potion.new({ id = id, quantity = quantity or 1 })
-    elseif category == 7 then
+    elseif category == CATEGORY.MATERIAL then
         item = Material.new({ id = id, quantity = quantity or 1 })
     else
         item = Equipment.new({ id = id })
@@ -79,7 +82,7 @@ function Inventory:remove(item, quantity)
     local existing = self:findById(item.id, item.category)
     if not existing then return false end
 
-    if existing.category == 4 or existing.category == 7 then
+    if existing.category == CATEGORY.POTION or existing.category == CATEGORY.MATERIAL then
         existing.quantity = existing.quantity - (quantity or item.quantity) -- Remove completly if no given quantity
         if existing.quantity <= 0 then
             self.data:remove(existing)
@@ -134,8 +137,8 @@ function Inventory:transferTo(target, item, quantity)
     if not item or not target or target == self then return false end
     if not self.data:contains(item) then return false end
 
-    -- Stackable (Potion/Material)
-    if item.category == 4 or item.category == 7 then
+
+    if item.category == CATEGORY.POTION or item.category == CATEGORY.MATERIAL then
         quantity = math.min(quantity or item.quantity, item.quantity)
         if quantity <= 0 then return false end
 

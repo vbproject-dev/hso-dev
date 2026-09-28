@@ -1,6 +1,7 @@
 local Player           = require "modules.game.entities.Player"
 local Cmd              = require "network.Cmd"
 local StatIds          = require "modules.game.stats.StatIds"
+local EquipType        = require "modules.game.items.EquipType"
 local CharacterWritter = {}
 
 function CharacterWritter.selectCharacter(session)
@@ -30,7 +31,9 @@ function CharacterWritter.selectCharacter(session)
             packet:writeByte(player.part.hair)
             packet:writeByte(player.part.eye)
 
-            local wearing = player.wearing:filter(function(item) return item ~= nil end)
+
+
+            local wearing = EquipType.filterView(player.wearing)
             packet:writeByte(wearing:size())
             wearing:forEach(function(item)
                 packet:writeByte(item.info.type)
@@ -186,7 +189,7 @@ function CharacterWritter.charInfo(player, target)
     packet:writeByte(target.typePK)
     packet:writeShort(target.pointPK)
 
-    local wearing = target.wearing:filter(function(item) return item ~= nil end)
+    local wearing = EquipType.filterView(target.wearing)
     packet:writeByte(wearing:size())
     wearing:forEach(function(item)
         packet:writeByte(item.info.type)

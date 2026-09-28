@@ -53,9 +53,12 @@ function GameServer:init()
     })
 
     if GameData.npcs then
+        local ScriptLoader = require("modules.game.npc.ScriptLoader")
         GameData.npcs:forEach(function(npc)
             if npc.script_name then
-                NpcScriptRegistry.load(npc.id, "modules.game.npc." .. npc.script_name)
+                NpcScriptRegistry.load(npc.id, "modules.game.npc.talk." .. npc.script_name)
+            elseif npc.script_code then
+                ScriptLoader.load(npc.id, npc.script_code)
             end
         end)
     end

@@ -177,6 +177,14 @@ function PacketReader.onUpdateStorage(packet)
     }
 end
 
+function PacketReader.onRebuildItem(packet)
+    return {
+        typeAction = packet:readByte(),
+        id = packet:readShort(),
+        category = packet:readByte(),
+    }
+end
+
 return {
     [Cmd.LOGIN] = PacketReader.onLogin,
     [Cmd.LOAD_IMAGE] = PacketReader.onLoadImage,
@@ -201,4 +209,5 @@ return {
     [Cmd.GO_HOME] = PacketReader.onGoHome,
     [Cmd.CHANGE_AREA] = PacketReader.onChangeArea,
     [Cmd.UPDATE_CHAR_CHEST] = PacketReader.onUpdateStorage,
+    [Cmd.REBUILD_ITEM] = PacketReader.onRebuildItem,
 }

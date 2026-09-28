@@ -1,5 +1,5 @@
 local LevelSystem = {
-    MAX_LEVEL = 130,
+    MAX_LEVEL = 300,
     BASE_EXPERIENCE = 150,
     EXPERIENCE_EXPONENT = 2.2
 }

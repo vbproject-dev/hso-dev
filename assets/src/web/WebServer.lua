@@ -19,7 +19,6 @@ function WebServer:init()
         return false
     end
 
-    self.server:staticFiles("/", "web")
     self.server:setMaxBodySize(1000000000)
     self.server:setHandler({
         onGet = function(request)

@@ -40,10 +40,10 @@ function Monster:recalculateStats()
     self.stats.attributes:set(StatIds.INTELLIGENCE, self.level * 2)
 
 
-    self.maxHp = self.stats:get(StatIds.HP) or 0
+    self.maxHp = self.hp + (self.stats:get(StatIds.HP) or 0)
     self.maxMp = self.stats:get(StatIds.MP) or 0
     self.hp = self.maxHp
-    self.mp = self.maxMp
+    self.mp = 0
 end
 
 function Monster:getExperience(player, damage)
@@ -82,7 +82,6 @@ function Monster:update(dt)
         if self.refreshTime <= 0 then
             self.target = nil
             self.hp = self.maxHp
-            self.mp = self.maxMp
             self.refreshTime = 3
         end
 

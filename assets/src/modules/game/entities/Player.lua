@@ -10,6 +10,7 @@ local StatIds           = require("modules.game.stats.StatIds")
 local AttributeFormulas = require("modules.game.stats.AttributeFormulas")
 local ObjectType        = require("modules.game.entities.ObjectType")
 local LevelSystem       = require("modules.game.combat.LevelSystem")
+local UpgradeState      = require("modules.game.upgrade.UpgradeState")
 
 
 local Player = class("Player", BaseObject)
@@ -51,7 +52,7 @@ function Player:ctor(data)
     end
 
     for _, itemData in pairs(data.wearing or {}) do
-        local item = Equipment.create(itemData)
+        local item = Equipment.new(itemData)
         if item then
             local slot = EquipType.getAvailableSlot(item.info.type, self.wearing)
             if slot then
@@ -86,8 +87,11 @@ function Player:ctor(data)
     -- Game States
     self.lastWarpTime = 0
     self.regenTimer = 0
+    self.isTeleport = 0
     self.shop = nil
     self.menu = nil
+    self.uiState = -1
+    self.upgradeState = UpgradeState.new()
     self:recalculateStats()
 end
 
@@ -109,7 +113,7 @@ function Player:wear(item, slot)
         return CommonWritter.noticeBox(self.session, "Invalid equipment type")
     end
 
-    if item.info.role ~= 5 and item.info.role ~= self.class then
+    if item.info.role ~= 4 and item.info.role ~= self.class then
         return CommonWritter.noticeBox(self.session, "Invalid class")
     end
 
@@ -207,8 +211,9 @@ function Player:wearingData()
             packet:writeShort(item.info.level)
             packet:writeByte(item.color)
 
-            packet:writeByte(item.options:size())
-            item.options:forEach(function(op)
+            local stats = item:getOptions()
+            packet:writeByte(stats:size())
+            stats:forEach(function(op)
                 packet:writeByte(op.id)
                 packet:writeInt(op.value)
             end)
@@ -229,11 +234,11 @@ function Player:wearingData()
 end
 
 function Player:resetAttributes()
-    self.strength = 4
-    self.dexterity = 4
-    self.vitality = 4
-    self.intelligence = 4
-    self.potentialPoints = (self.level - 1) * 4
+    self.strength = 5
+    self.dexterity = 5
+    self.vitality = 5
+    self.intelligence = 5
+    self.potentialPoints = (self.level - 1) * 5
     self:recalculateStats()
 end
 
@@ -261,7 +266,7 @@ function Player:recalculateStats()
 
     self.wearing:forEach(function(item)
         if item then
-            item.options:forEach(function(opt)
+            item:getOptions():forEach(function(opt)
                 self.stats.equipment:add(opt.id, opt.value)
             end)
         end
@@ -315,7 +320,7 @@ function Player:addExperience(experience)
     while LevelSystem:canLevelUp(self) do
         self.exp = self.exp - LevelSystem:getRequiredExperience(self.level)
         self.level = self.level + 1
-        self.potentialPoints = self.potentialPoints + 4
+        self.potentialPoints = self.potentialPoints + 5
         self.skillPoints = self.skillPoints + 1
         self:recalculateStats()
 
@@ -355,17 +360,21 @@ function Player:update(dt)
 
     self.regenTimer = self.regenTimer - 2
 
+    if self:isDead() then
+        return
+    end
+
     if self.hp < self.maxHp then
         local hpRegen = self.stats:get(StatIds.REPLENISH_LIFE)
         if hpRegen > 0 then
-            self:restoreHp((self.maxHp * hpRegen) / 10000)
+            self:restoreHp((self.maxHp * hpRegen / 10000) * (2 / 60))
         end
     end
 
     if self.mp < self.maxMp then
         local mpRegen = self.stats:get(StatIds.REGENERATE_MANA)
         if mpRegen > 0 then
-            self:restoreMp((self.maxMp * mpRegen) / 10000)
+            self:restoreMp((self.maxMp * mpRegen / 10000) * (2 / 60))
         end
     end
 end
@@ -384,6 +393,14 @@ function Player:restoreMp(value)
     self.zone:forEachPlayer(function(other)
         GameWritter.usePotion(other, self, 1, value)
     end)
+end
+
+function Player:teleport(map, x, y)
+    local GameWorld = require("modules.game.world.GameWorld")
+    self.x = x
+    self.y = y
+    self.isTeleport = 1
+    GameWorld:instance():joinMap(self, map)
 end
 
 function Player:toTable()

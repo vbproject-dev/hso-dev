@@ -80,4 +80,18 @@ function EquipType.sortItems(itemsList)
     end)
 end
 
+function EquipType.filterView(itemsList)
+    local allowedSlots = {
+        [Slot.WEAPON] = true,
+        [Slot.ARMOR] = true,
+        [Slot.LEG] = true,
+        [Slot.HELMET] = true,
+        [Slot.WING] = true,
+    }
+
+    return itemsList:filter(function(item)
+        return item ~= nil and allowedSlots[EquipType.getSlot(item.info.type)] == true
+    end)
+end
+
 return EquipType

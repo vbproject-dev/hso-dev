@@ -268,11 +268,17 @@ end
 
 function Zone:onPlayerJoin(player)
     CharacterWritter.mainCharInfo(player)
-    CommonWritter.changeMap(player)
+    GameWritter.changeMap(player)
     GameWritter.npcBig(player, self.npcs)
     self:forEachPlayer(function(other)
         other:send(Packet.new(Cmd.CHAR_WEARING, player:wearingData()))
     end)
+
+    -- GameWritter.itemMap(player, -65, 60, 648, 360, 4, 2, 95)
+    -- GameWritter.itemMap(player, -64, 59, 408, 360, 4, 2, 95)
+    -- GameWritter.itemMap(player, -62, 61, 528, 360, 3, 2, 75)
+    -- GameWritter.itemMap(player, -66, 64, 576, 216, 2, 2, 115)
+    -- GameWritter.itemMap(player, -89, 110, 288, 600, 4, 2, 115)
 end
 
 function Zone:onPlayerLeave(player)

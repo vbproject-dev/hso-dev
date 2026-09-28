@@ -190,28 +190,6 @@ function CommonWritter.fillRectUpdate(session, type)
     end)
 end
 
-function CommonWritter.changeMap(player)
-    if not player then return false end
-
-    return try(function()
-        local map = player:getMap()
-        local packet = Packet.new(Cmd.CHANGE_MAP)
-        packet:writeShort(map.id)
-        packet:writeShort(player.x / 24)
-        packet:writeShort(player.y / 24)
-
-        packet:writeBytes(player:getMap():toBytes())
-
-        packet:writeByte(0)
-        packet:writeByte(player.zone.id)
-        packet:writeByte(map.type)
-        packet:writeBoolean(map.isCity)
-        packet:writeBoolean(map.isShowHs)
-
-        player:send(packet)
-    end)
-end
-
 function CommonWritter.listSkill(session)
     local player = session:get("player")
     if not player then
