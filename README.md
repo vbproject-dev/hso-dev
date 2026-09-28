@@ -20,7 +20,7 @@ cd hso-dev
 Make the server executable:
 
 ```bash
-chmod +x SV
+chmod +x Server
 ```
 
 ## Configuration
@@ -54,7 +54,7 @@ Replace `YOUR_DATABASE_PASSWORD` with your database password.
 ## Start Server
 
 ```bash
-nohup ./SV > server.log 2>&1 &
+nohup ./Server > server.log 2>&1 &
 ```
 
 View logs:
