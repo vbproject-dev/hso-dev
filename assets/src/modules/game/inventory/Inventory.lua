@@ -178,6 +178,11 @@ function Inventory:toTable()
     end)
 end
 
+function Inventory:has(id, category, quantity)
+    local item = self:findById(id, category)
+    return item and item.quantity >= (quantity or 1) or false
+end
+
 function Inventory:toJson()
     return JSON.fromTable(self:toTable())
 end

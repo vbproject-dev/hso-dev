@@ -1,7 +1,6 @@
 return {
     MAX_LEVEL = 15,
 
-    -- CHANCE[level] = % to go from +level to +(level+1)
     CHANCE = {
         [0] = 100,
         100,
@@ -20,15 +19,11 @@ return {
         12, -- +11 .. +14
     },
 
-    -- Level lost on failure (first tier whose maxLevel >= level)
-    FAIL_TIERS = {
-        { maxLevel = 5,  drop = 0 },
-        { maxLevel = 10, drop = 1 },
-        { maxLevel = 14, drop = 2 },
-    },
-
+    -- On failure the item falls back to the highest safe level <= its level
+    SAFE_LEVELS = { 0, 6, 12 },
 
     SUPPORTS = {
+
         [12] = {
             desc      = "Increase Craft Success rate 30% with 30% insurance (only lose 2 levels if craft fails)",
             bonus     = 30,

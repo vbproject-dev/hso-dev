@@ -3,11 +3,10 @@ local Config = require "modules.game.upgrade.UpgradeConfig"
 local UpgradeService = {}
 
 UpgradeService.Result = {
-    SUCCESS  = 3,
-    FAIL     = 4,
-    MAXLEVEL = -1,
+    SUCCESS  = "SUCCESS",
+    FAIL     = "FAIL",
+    MAXLEVEL = "MAXLEVEL",
 }
-
 local Result = UpgradeService.Result
 
 local NO_SUPPORT = {}
@@ -16,11 +15,13 @@ local function supportOf(supportItem)
     return supportItem and Config.SUPPORTS[supportItem.id] or NO_SUPPORT
 end
 
+-- Levels lost on failure: distance to the highest safe level
 local function failDrop(level)
-    for _, tier in ipairs(Config.FAIL_TIERS) do
-        if level <= tier.maxLevel then return tier.drop end
+    local floor = 0
+    for _, safe in ipairs(Config.SAFE_LEVELS) do
+        if safe <= level then floor = safe end
     end
-    return 0
+    return level - floor
 end
 
 local function rollPercent()
@@ -53,7 +54,6 @@ function UpgradeService.upgrade(item, supportItem, roll)
     local insured = ins ~= nil and drop > ins.maxDrop and roll() < ins.chance
     if insured then drop = ins.maxDrop end
 
-    drop = math.min(drop, level)
     item.plus = level - drop
     return Result.FAIL, drop, insured
 end

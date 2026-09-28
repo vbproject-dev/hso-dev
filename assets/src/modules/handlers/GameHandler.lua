@@ -461,14 +461,58 @@ function GameHandler.onRebuildItem(session, request)
                 end
 
                 local cfg = GameData.getSetting("config")
-                local materials = cfg.upgrade_materials
+                local materials = ArrayList.new(cfg.upgrade_materials)
                 local level = cfg.upgrade_levels[player.upgradeState.item.plus + 1]
+                local quantities = ArrayList.new(level.value)
+
+                local valid = true
+
+                materials:forEachIndexed(function(index, id)
+                    if index < quantities:size() then
+                        local quantity = quantities:get(index)
+
+                        if quantity > 0 and not player.inventory:has(id, ItemCategory.MATERIAL, quantity) then
+                            valid = false
+                        end
+                    end
+                end)
+
+                if not valid then
+                    CommonWritter.noticeBox(session, "Materials tidak cukup")
+                    return
+                end
+
+
+                local upgradePrice = request.category == 0 and level.gold or level.gem
+
+                if not player:useMoney(request.category, upgradePrice) then
+                    CommonWritter.noticeBox(session, request.category == 0 and "Gold tidak cukup" or "Gem tidak cukup")
+                    return
+                end
+
+                -- Reduce require materials from player inventory
+                materials:forEachIndexed(function(index, id)
+                    if index < quantities:size() then
+                        local quantity = quantities:get(index)
+
+                        if quantity > 0 then
+                            local item = player.inventory:findById(id, ItemCategory.MATERIAL)
+                            player.inventory:remove(item, quantity)
+                        end
+                    end
+                end)
+
+                if player.upgradeState.supportItem then
+                    player.inventory:remove(player.upgradeState.supportItem, 1)
+                end
 
                 local result = UpgradeService.upgrade(player.upgradeState.item, player.upgradeState.supportItem)
-                if result == 3 then
+                if result == UpgradeService.Result.SUCCESS then
                     GameWritter.itemRebuild(player, request.typeAction, 3, "Upgrade Berhasil")
-                elseif result == 4 then
-                    GameWritter.itemRebuild(player, request.typeAction, 4, "Upgrade Berhasil")
+                elseif result == UpgradeService.Result.FAIL then
+                    GameWritter.itemRebuild(player, request.typeAction, 4, "Upgrade Gagal")
+                else
+                    CommonWritter.noticeBox(player.session, "Level sudah maksimal")
                 end
 
                 GameWritter.updateInventory(player)
