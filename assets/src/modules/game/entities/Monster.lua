@@ -4,6 +4,7 @@ local ObjectType        = require("modules.game.entities.ObjectType")
 local StatManager       = require("modules.game.stats.StatManager")
 local AttributeFormulas = require("modules.game.stats.AttributeFormulas")
 local StatIds           = require("modules.game.stats.StatIds")
+local DropService       = require("modules.game.items.DropService")
 
 local Monster           = class("Monster", BaseObject)
 
@@ -17,6 +18,7 @@ function Monster:ctor(data)
     self.level = self.template.level
     self.hp = self.template.hp
     self.maxHp = self.template.hp
+    self.itemDrops = ArrayList.new(self.template.item_drop or {})
     self.color = 0       -- 1: blue, 2: yellow
     self.refreshTime = 3 -- 3 sec
 
@@ -55,7 +57,7 @@ function Monster:getExperience(player, damage)
 end
 
 function Monster:takeDamage(damage, attacker)
-    local actualDamage = Monster.super.takeDamage(self, damage)
+    local actualDamage = Monster.super.takeDamage(self, damage, attacker)
 
     if actualDamage <= 0 then
         return 0
@@ -73,6 +75,16 @@ function Monster:takeDamage(damage, attacker)
         })
     end)
     return actualDamage
+end
+
+function Monster:onDead(attacker)
+    local items = DropService.dropItems(self, attacker)
+
+    if items:size() > 0 then
+        items:forEach(function(item)
+            self.zone:addItemDrop(item)
+        end)
+    end
 end
 
 function Monster:update(dt)

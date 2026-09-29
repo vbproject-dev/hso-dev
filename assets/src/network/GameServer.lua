@@ -6,6 +6,7 @@ local HandlerRegistry        = require("core.HandlerRegistry")
 local ModuleRegistry         = require("core.ModuleRegistry")
 local NpcScriptRegistry      = require("modules.game.npc.NpcScriptRegistry")
 local Cmd                    = require("network.Cmd")
+local DatabaseHelper         = require("utils.DatabaseHelper")
 local GameServer             = class("GameServer")
 
 local MAX_PACKETS_PER_SECOND = 15
@@ -39,8 +40,8 @@ function GameServer:init()
         return false
     end
 
+    --DatabaseHelper.createMonsterDrop()
     GameWorld.instance():init()
-
 
     ModuleRegistry.loadPackage("modules.writters")
     ModuleRegistry.loadPackage("modules.game.items.function")

@@ -1,6 +1,6 @@
 local GameData = {
 
-    settings = ArrayList.new(),
+    configs = ArrayList.new(),
     monsters = ArrayList.new(),
     equipments = ArrayList.new(),
     materials = ArrayList.new(),
@@ -25,7 +25,7 @@ function GameData.load()
 
     local datasets = {
         { table = "monster",        field = "monsters" },
-        { table = "settings",       field = "settings" },
+        { table = "config",         field = "configs" },
         { table = "item_equipment", field = "equipments" },
         { table = "item_material",  field = "materials" },
         { table = "item_potion",    field = "potions" },
@@ -61,9 +61,8 @@ function GameData.load()
     return true
 end
 
-function GameData.getSetting(name)
-    local setting = GameData.settings:findFirst(function(data) return data.name == name end)
-    return setting and setting.data
+function GameData.getConfig()
+    return GameData.configs:findFirst(function(data) return data.id == 1 end)
 end
 
 function GameData.getEquipment(id)
@@ -145,7 +144,7 @@ function GameData.getItem(id, category)
 end
 
 function GameData.clear()
-    GameData.settings:clear()
+    GameData.configs:clear()
     GameData.monsters:clear()
     GameData.equipments:clear()
     GameData.materials:clear()

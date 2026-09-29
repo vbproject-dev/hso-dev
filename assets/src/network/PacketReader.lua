@@ -185,6 +185,13 @@ function PacketReader.onRebuildItem(packet)
     }
 end
 
+function PacketReader.onGetItemMap(packet)
+    return {
+        itemId = packet:readShort(),
+        category = packet:readByte()
+    }
+end
+
 return {
     [Cmd.LOGIN] = PacketReader.onLogin,
     [Cmd.LOAD_IMAGE] = PacketReader.onLoadImage,
@@ -210,4 +217,5 @@ return {
     [Cmd.CHANGE_AREA] = PacketReader.onChangeArea,
     [Cmd.UPDATE_CHAR_CHEST] = PacketReader.onUpdateStorage,
     [Cmd.REBUILD_ITEM] = PacketReader.onRebuildItem,
+    [Cmd.GET_ITEM_MAP] = PacketReader.onGetItemMap,
 }

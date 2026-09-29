@@ -42,10 +42,13 @@ function Equipment:getOptions()
         if optData then
             local value = opt.value
 
+
             if optData.percent == 1 then
-                value = value + (value * optData.bonus_upgrade / 100 * self.plus)
+                local bonus = optData.bonus_upgrade * self.color * 0.2
+                value = value + (value * bonus / 100 * self.plus)
             else
-                value = value + (optData.bonus_upgrade * self.plus)
+                local bonus = optData.bonus_upgrade * self.color
+                value = value + (bonus * self.plus)
             end
 
             stats:add({

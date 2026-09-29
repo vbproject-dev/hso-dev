@@ -56,8 +56,9 @@ function GameWritter.monsterInfo(player, monster)
     player:send(packet)
 end
 
-function GameWritter.removeObject(player, objectId)
+function GameWritter.removeObject(player, objectId, category)
     local packet = Packet.new(Cmd.REMOVE_ACTOR)
+    packet:writeByte(category)
     packet:writeShort(objectId)
     player:send(packet)
 end
@@ -490,6 +491,28 @@ function GameWritter.effectWeather(player, type)
     packet:writeByte(type)
     packet:writeShort(50)
     packet:writeShort(5000)
+    player:send(packet)
+end
+
+function GameWritter.dropItem(player, item)
+    local packet = Packet.new(Cmd.ITEM_DROP)
+    packet:writeByte(item.category);
+    packet:writeShort(item.mobId);
+    packet:writeShort(item.icon);
+    packet:writeShort(item.id);
+    packet:writeUTF(item.name);
+    packet:writeByte(item.color);
+    packet:writeShort(player.id);
+
+    player:send(packet)
+end
+
+function GameWritter.pickItem(player, playerId, itemId, category)
+    local packet = Packet.new(Cmd.GET_ITEM_MAP)
+    packet:writeByte(category)
+    packet:writeShort(itemId)
+    packet:writeShort(playerId)
+
     player:send(packet)
 end
 

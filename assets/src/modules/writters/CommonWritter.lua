@@ -110,7 +110,7 @@ function CommonWritter.itemTemplate(session)
         end)
 
         -- PRICE SETTINGS
-        local cfg = GameData.getSetting("config")
+        local cfg = GameData.getConfig()
 
         packet:writeShort(cfg.price_sell_potion)
         packet:writeShort(cfg.price_sell_item)
@@ -150,7 +150,7 @@ function CommonWritter.nameServer(session)
         packet:writeByte(1)
         packet:writeUTF("Nothing")
 
-        local cfg = GameData.getSetting("config")
+        local cfg = GameData.getConfig()
         packet:writeByte(#cfg.upgrade_materials)
         for _, id in ipairs(cfg.upgrade_materials) do
             packet:writeShort(id)

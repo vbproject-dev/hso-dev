@@ -37,16 +37,19 @@ function BaseObject:getMap()
 end
 
 function BaseObject:takeDamage(damage, attacker)
-    if self:isDead() then
-        return self.hp
-    end
-
     damage = math.max(0, damage or 0)
     local actualDamage = math.min(self.hp, damage)
 
     self.hp = self.hp - actualDamage
 
+    if self.hp <= 0 then
+        self:onDead(attacker)
+    end
+
     return actualDamage
+end
+
+function BaseObject:onDead(attacker)
 end
 
 function BaseObject:distanceTo(target)

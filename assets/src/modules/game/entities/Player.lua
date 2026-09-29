@@ -193,6 +193,13 @@ function Player:send(packet)
     end
 end
 
+function Player:onDead(attacker)
+    local GameWritter = require("modules.writters.GameWritter")
+    self.zone:forEachPlayer(function(other)
+        GameWritter.playerDie(other, attacker, self)
+    end)
+end
+
 function Player:wearingData()
     local packet = Packet.new()
     packet:writeShort(self.id)

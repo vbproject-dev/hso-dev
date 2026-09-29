@@ -50,11 +50,6 @@ function Combat.dealDamageTo(player, target, skill)
         end
 
         target:takeDamage(finalDamage, player)
-        if target:isDead() and target.type == ObjectType.PLAYER then
-            target.zone:forEachPlayer(function(other)
-                GameWritter.playerDie(other, player, target)
-            end)
-        end
 
         -- Reflect Damage
         if not target:isDead() and target.type == ObjectType.PLAYER then

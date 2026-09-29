@@ -1,7 +1,7 @@
 local Cmd              = require "network.Cmd"
-local CommonWritter    = require "modules.writters.CommonWritter"
 local CharacterWritter = require "modules.writters.CharacterWritter"
 local GameWritter      = require "modules.writters.GameWritter"
+local InventoryHelper  = require "modules.game.inventory.InventoryHelper"
 
 
 local Zone = class("Zone")
@@ -13,7 +13,8 @@ function Zone:ctor(map, id, maxPlayers)
     self.players = ArrayList.new()
     self.monsters = ArrayList.new()
     self.npcs = ArrayList.new()
-
+    self.items = ArrayList.new()
+    self.nextDropId = 0
     self.visiblePlayers = {}
     self.visibleMonsters = {}
 end
@@ -130,6 +131,67 @@ function Zone:removeNpc(npc)
     return true
 end
 
+function Zone:addItemDrop(item)
+    if not item then return false end
+
+    item.id = self.nextDropId
+    self.nextDropId = self.nextDropId % 32767 + 1
+
+    self.items:add(item)
+
+    self:forEachPlayer(function(player)
+        GameWritter.dropItem(player, item)
+    end)
+
+    return true
+end
+
+function Zone:removeItemDrop(item)
+    if not item then
+        return false
+    end
+
+    self.items:remove(item)
+
+    -- self:forEachPlayer(function(player)
+    --     GameWritter.removeObject(player, item.id)
+    -- end)
+
+    return true
+end
+
+function Zone:getItemDrop(id)
+    return self.items:findFirst(function(item)
+        return item.id == id
+    end)
+end
+
+function Zone:pickItem(player, itemId, category)
+    local item = self.items:findFirst(function(item)
+        return item.id == itemId and item.category == category
+    end)
+
+    if not item or not item:canPick(player.id) then
+        return false
+    end
+
+    self:removeItemDrop(item)
+
+    local item = InventoryHelper.createItem({
+        id = item.itemId,
+        category = item.category,
+        quantity = item.quantity,
+        options = item.options,
+    })
+
+    if item then
+        player.inventory:add(item)
+        return true
+    end
+
+    return false
+end
+
 function Zone:getObjects(type)
     if type == 0 then return self.players end
     if type == 1 then return self.monsters end
@@ -185,6 +247,14 @@ function Zone:update(dt)
         self:updatePlayers(player)
         self:updateMonsters(player)
     end)
+
+    self.items:forEach(function(item)
+        item:update(dt)
+    end)
+
+    self.items = self.items:filter(function(item)
+        return not item:isExpired()
+    end)
 end
 
 function Zone:isVisible(a, b, range)
@@ -218,7 +288,7 @@ function Zone:updatePlayers(player)
         if visiblePlayers[other.id] then
             visiblePlayers[other.id] = nil
 
-            GameWritter.removeObject(player, other.id)
+            GameWritter.removeObject(player, other.id, other.type)
         end
     end)
 end
@@ -249,7 +319,7 @@ function Zone:updateMonsters(player)
         if visibleMonsters[monster.id] then
             visibleMonsters[monster.id] = nil
 
-            GameWritter.removeObject(player, monster.id)
+            GameWritter.removeObject(player, monster.id, monster.type)
         end
     end)
 end

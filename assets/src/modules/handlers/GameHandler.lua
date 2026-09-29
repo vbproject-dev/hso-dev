@@ -206,23 +206,26 @@ function GameHandler.onMiniGame(session, request)
 
 
         local menu = Menu.new("Mini Game")
-        menu:add("Add Equipment", function()
-            local minLevel = player.level - 50
-            local maxLevel = player.level + 10
-            local items = GameData.equipments
-                :filter(function(itemData)
-                    return (itemData.role == 4 or itemData.role == player.class) and (itemData.level >= minLevel and
-                        itemData.level <= maxLevel) and itemData.color > 3
+        local account = session:get("account")
+        if account.role == 1 then
+            menu:add("Add Equipment", function()
+                local minLevel = player.level - 50
+                local maxLevel = player.level + 10
+                local items = GameData.equipments
+                    :filter(function(itemData)
+                        return (itemData.role == 4 or itemData.role == player.class) and (itemData.level >= minLevel and
+                            itemData.level <= maxLevel) and itemData.color > 3
+                    end)
+
+                EquipType.sortItems(items)
+
+                items:forEach(function(item)
+                    player.inventory:addFrom(item.id, 3)
                 end)
-
-            EquipType.sortItems(items)
-
-            items:forEach(function(item)
-                player.inventory:addFrom(item.id, 3)
+                GameWritter.updateInventory(player)
+                CommonWritter.noticeBox(session, "Added " .. items:size() .. " equipment")
             end)
-            GameWritter.updateInventory(player)
-            CommonWritter.noticeBox(session, "Added " .. items:size() .. " equipment")
-        end)
+        end
         menu:add("Clear inventory", function()
             player.inventory:clear()
             GameWritter.updateInventory(player)
@@ -234,10 +237,6 @@ function GameHandler.onMiniGame(session, request)
         addTeleport(kota, "Kota Pelabuhan", 67, 576, 222)
         addTeleport(kota, "Kota Musim Dingin", 93, 498, 336)
 
-        menu:add("Test", function()
-            -- GameWritter.effectFromServer(player, 10, player.id, player)
-            GameWritter.effectWeather(player, 1)
-        end)
         player.menu = menu
         GameWritter.openMenu(player, menu)
     end)
@@ -474,7 +473,7 @@ function GameHandler.onRebuildItem(session, request)
                     return
                 end
 
-                local cfg = GameData.getSetting("config")
+                local cfg = GameData.getSetting()
                 local materials = ArrayList.new(cfg.upgrade_materials)
                 local level = cfg.upgrade_levels[player.upgradeState.item.plus + 1]
                 local quantities = ArrayList.new(level.value)
@@ -533,6 +532,17 @@ function GameHandler.onRebuildItem(session, request)
     end)
 end
 
+function GameHandler.onGetItemDrop(session, request)
+    return HandlerGuard.withZone(session, function(player, zone)
+        if zone:pickItem(player, request.itemId, request.category) then
+            zone:forEachPlayer(function(p)
+                GameWritter.pickItem(p, player.id, request.itemId, request.category)
+            end)
+            GameWritter.updateInventory(player)
+        end
+    end)
+end
+
 return {
     [Cmd.OBJECT_MOVE] = GameHandler.onMove,
     [Cmd.USE_ITEM] = GameHandler.onUseItem,
@@ -551,4 +561,5 @@ return {
     [Cmd.CHANGE_AREA] = GameHandler.onChangeArea,
     [Cmd.UPDATE_CHAR_CHEST] = GameHandler.onUpdateStorage,
     [Cmd.REBUILD_ITEM] = GameHandler.onRebuildItem,
+    [Cmd.GET_ITEM_MAP] = GameHandler.onGetItemDrop,
 }

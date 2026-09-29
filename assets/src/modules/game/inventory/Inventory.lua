@@ -16,11 +16,11 @@ end
 
 function Inventory:createItem(data)
     local item
-    if data.category == 3 then
+    if data.category == ItemCategory.EQUIPMENT then
         item = Equipment.new(data)
-    elseif data.category == 4 then
+    elseif data.category == ItemCategory.POTION then
         item = Potion.new(data)
-    elseif data.category == 7 then
+    elseif data.category == ItemCategory.MATERIAL then
         item = Material.new(data)
     end
 
