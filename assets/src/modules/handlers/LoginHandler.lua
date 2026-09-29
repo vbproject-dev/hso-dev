@@ -8,6 +8,7 @@ local LoginHandler     = {}
 
 local GUEST_USER       = "1"
 local GUEST_PASS       = "1"
+local LOGIN_URL        = "https://vbproject.org/api/query.php?table=account"
 
 local function createGuestAccount()
     local username, password, account
@@ -43,17 +44,44 @@ function LoginHandler.onLogin(session, request)
             return LoginWritter.loginFail(session, "Failed to create guest account")
         end
     else
-        account, err = findTable("account", { username = user })
-        if not account then
+        local response = Http.post(LOGIN_URL, {
+            action = "search",
+            where = {
+                {
+                    field = "user",
+                    op = "=",
+                    value = request.user
+                }
+            },
+            page = 1,
+            per_page = 1
+        })
+
+        if not response.ok then
             return LoginWritter.loginFail(session, "Account not found")
         end
 
-        if not Md5.verifyMD5(pass, account.password) then
+
+        local raw = JSON.toTable(response.body)
+        account = raw.data[1]
+
+        if pass ~= account.pass then
             return LoginWritter.loginFail(session, "Incorrect password")
         end
+
+
+
+        -- account, err = findTable("account", { username = user })
+        -- if not account then
+        --     return LoginWritter.loginFail(session, "Account not found")
+        -- end
+
+        -- if not Md5.verifyMD5(pass, account.password) then
+        --     return LoginWritter.loginFail(session, "Incorrect password")
+        -- end
     end
 
-    LoginWritter.saveLogin(session, account.username, guestPassword or pass)
+    LoginWritter.saveLogin(session, account.user, guestPassword or pass)
 
     -- Check if the client needs to receive an update
     local count = PartManager.getPartCount(request.zoom)
@@ -74,17 +102,17 @@ function LoginHandler.onLogin(session, request)
     end
 
     -- Update the last login and the IP address of the account
-    account.ip_address = session:getRemoteAddress():match("^(.-):%d+$")
-    account.last_login = os.date("%Y-%m-%d %H:%M:%S")
-    local result, updateErr = updateTable("account", {
-        ip_address = account.ip_address,
-        last_login = account.last_login,
-    }, { id = account.id })
+    -- account.ip_address = session:getRemoteAddress():match("^(.-):%d+$")
+    -- account.last_login = os.date("%Y-%m-%d %H:%M:%S")
+    -- local result, updateErr = updateTable("account", {
+    --     ip_address = account.ip_address,
+    --     last_login = account.last_login,
+    -- }, { id = account.id })
 
-    if not result then
-        log("Failed to update account: %s", tostring(updateErr))
-        return false
-    end
+    -- if not result then
+    --     log("Failed to update account: %s", tostring(updateErr))
+    --     return false
+    -- end
 
     -- Set the session data
     session:set("zoom", request.zoom)
