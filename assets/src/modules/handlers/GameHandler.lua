@@ -26,7 +26,7 @@ function GameHandler.onUseItem(session, request)
             return
         end
 
-        if player.level < item.level then
+        if player.level < item.info.level then
             CharacterWritter.noticeBox(session, "Belum cukup level")
             return
         end
