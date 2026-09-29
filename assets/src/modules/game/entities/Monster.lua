@@ -36,10 +36,10 @@ end
 function Monster:recalculateStats()
     self.stats.attributes:reset()
 
-    self.stats.attributes:set(StatIds.STRENGTH, self.level * 2)
-    self.stats.attributes:set(StatIds.DEXTERITY, self.level * 2)
-    self.stats.attributes:set(StatIds.VITALITY, self.level * 2)
-    self.stats.attributes:set(StatIds.INTELLIGENCE, self.level * 2)
+    self.stats.attributes:set(StatIds.STRENGTH, self.level)
+    self.stats.attributes:set(StatIds.DEXTERITY, self.level)
+    self.stats.attributes:set(StatIds.VITALITY, self.level)
+    self.stats.attributes:set(StatIds.INTELLIGENCE, self.level)
 
 
     self.maxHp = self.hp + (self.stats:get(StatIds.HP) or 0)
