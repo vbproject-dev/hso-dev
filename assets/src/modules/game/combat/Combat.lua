@@ -1,17 +1,10 @@
-local DamageType            = require "modules.game.combat.DamageType"
-local StatIds               = require "modules.game.stats.StatIds"
-local GameWritter           = require "modules.writters.GameWritter"
-local ObjectType            = require "modules.game.entities.ObjectType"
-local Combat                = {}
+local DamageType  = require "modules.game.combat.DamageType"
+local StatIds     = require "modules.game.stats.StatIds"
+local GameWritter = require "modules.writters.GameWritter"
+local ObjectType  = require "modules.game.entities.ObjectType"
+local Combat      = {}
 
--- Diminishing-returns curve: defense / (defense + damage * SCALE).
--- Uses the incoming hit itself as the reference scale instead of a
--- fixed/level-based constant. DEFENSE and the damage stats both derive
--- from the same AttributeFormulas growth curves, so they already scale
--- together across levels -- comparing defense directly to the hit means
--- mitigation stays consistent with no separate constant to retune every
--- time AttributeFormulas changes.
--- SCALE < 1 makes defense relatively stronger, SCALE > 1 weaker.
+
 local DEFENSE_CURVE_SCALE   = 1
 local MAX_DEFENSE_REDUCTION = 0.80 -- hard cap so no target is ever near-unkillable
 
@@ -36,7 +29,7 @@ function Combat.dealDamageTo(player, target, skill)
 
         finalDamage = result.damage
 
-        log("dmgType %s actual damage %d final damage %d", tostring(skill:getDamageType()), skillDamage, finalDamage)
+        -- log("dmgType %s actual damage %d final damage %d", tostring(skill:getDamageType()), skillDamage, finalDamage)
         if result.isPenetration then
             table.insert(textDamage, { id = 1, value = finalDamage })
         end
