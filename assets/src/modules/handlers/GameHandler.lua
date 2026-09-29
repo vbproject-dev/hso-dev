@@ -26,7 +26,11 @@ function GameHandler.onUseItem(session, request)
             return
         end
 
-        log("SLOT %d", request.slot)
+        if player.level < item.level then
+            CharacterWritter.noticeBox(session, "Belum cukup level")
+            return
+        end
+
 
         local slot = EquipType.getSlot(item.info.type)
         if request.slot == Slot.RING_1 or request.slot == Slot.RING_2 then
